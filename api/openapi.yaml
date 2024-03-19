@@ -1,0 +1,499 @@
+openapi: 3.0.3
+info:
+  description: "This is the OpenAPI Spec for the [Loops API](https://loops.so/docs/api)."
+  title: Loops OpenAPI Spec
+  version: 1.0.1
+servers:
+- url: https://app.loops.so/api/v1
+tags:
+- description: Manage contacts in your audience
+  name: Contacts
+- description: Trigger email sending with events
+  name: Events
+- description: Send transactional emails
+  name: Transactional emails
+- description: Custom contact properties
+  name: Custom fields
+paths:
+  /contacts/create:
+    post:
+      description: Add a contact to your audience.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+        description: "You can add custom contact properties as keys in this request\
+          \ (of type `string`, `number`, `boolean` or `date` ([see available date\
+          \ formats](https://loops.so/docs/contacts/properties#dates))).<br>Make sure\
+          \ to create the properties in Loops before using them in API calls."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactSuccessResponse'
+          description: Successful create.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Bad request (e.g. invalid email address).
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Wrong HTTP request method.
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Email or `userId` already exists.
+      security:
+      - apiKey: []
+      summary: Create a contact
+      tags:
+      - Contacts
+  /contacts/update:
+    put:
+      description: "Update a contact by `email` or `userId`.<br>If you want to update\
+        \ a contact’s email address, the contact will first need a `userId` value.\
+        \ You can then make a request containing the userId field along with an updated\
+        \ email address."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+        description: "You can add custom contact properties as keys in this request\
+          \ (of type `string`, `number`, `boolean` or `date` ([see available date\
+          \ formats](https://loops.so/docs/contacts/properties#dates))).<br>Make sure\
+          \ to create the properties in Loops before using them in API calls."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactSuccessResponse'
+          description: Successful update
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Bad request (e.g. `email` or `userId` are missing).
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Wrong HTTP request method.
+      security:
+      - apiKey: []
+      summary: Update a contact
+      tags:
+      - Contacts
+  /contacts/find:
+    get:
+      description: Search for a contact by `email`.
+      parameters:
+      - description: Email address (URI-encoded)
+        explode: true
+        in: query
+        name: email
+        required: true
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Contact'
+                type: array
+          description: List of contacts (or an empty array if no contact was found).
+            Contact objects will include any custom properties.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Bad request (e.g. invalid email address).
+        "405":
+          description: Wrong HTTP request method.
+      security:
+      - apiKey: []
+      summary: Find a contact
+      tags:
+      - Contacts
+  /contacts/delete:
+    post:
+      description: Delete a contact by `email` or `userId`.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactDeleteRequest'
+        description: Include only one of `email` or `userId`.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactDeleteResponse'
+          description: Successful delete
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Bad request (e.g. `email` and `userId` are both provided).
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactFailureResponse'
+          description: Contact not found.
+        "405":
+          description: Wrong HTTP request method.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_contacts_delete_post_500_response'
+          description: Internal error.
+      security:
+      - apiKey: []
+      summary: Delete a contact
+      tags:
+      - Contacts
+  /events/send:
+    post:
+      description: Send events to trigger emails in Loops.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+        description: "Provide either `email` or `userId` to identify the contact ([read\
+          \ more](https://loops.so/docs/api-reference/send-event#body)).<br>You can\
+          \ add custom contact properties as keys in this request (of type `string`,\
+          \ `number`, `boolean` or `date` ([see available date formats](https://loops.so/docs/contacts/properties#dates))).<br>Make\
+          \ sure to create the properties in Loops before using them in API calls."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSuccessResponse'
+          description: Successful send.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventFailureResponse'
+          description: Bad request (e.g. `eventName` is missing).
+        "405":
+          description: Wrong HTTP request method.
+      security:
+      - apiKey: []
+      summary: Send an event
+      tags:
+      - Events
+  /transactional:
+    post:
+      description: Send a transactional email to a contact.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionalRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionalSuccessResponse'
+          description: Successful send.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_transactional_post_400_response'
+          description: Bad request (e.g. transactional email is not published).
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionalFailure2Response'
+          description: Transactional email not found.
+        "405":
+          description: Wrong HTTP request method.
+      security:
+      - apiKey: []
+      summary: Send a transactional email
+      tags:
+      - Transactional emails
+  /contacts/customFields:
+    get:
+      description: Retrieve a list of your account's custom contact properties.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CustomField'
+                type: array
+          description: Successful send.
+        "405":
+          description: Wrong HTTP request method.
+      security:
+      - apiKey: []
+      summary: Get a list of custom contact properties
+      tags:
+      - Custom fields
+components:
+  schemas:
+    Contact:
+      example:
+        firstName: firstName
+        lastName: lastName
+        subscribed: true
+        id: id
+        source: source
+        userGroup: userGroup
+        userId: userId
+        email: email
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        source:
+          type: string
+        subscribed:
+          type: boolean
+        userGroup:
+          type: string
+        userId:
+          type: string
+      type: object
+    ContactRequest:
+      example:
+        firstName: firstName
+        lastName: lastName
+        subscribed: true
+        userGroup: userGroup
+        userId: userId
+        email: email
+      properties:
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        subscribed:
+          type: boolean
+        userGroup:
+          type: string
+        userId:
+          type: string
+      required:
+      - email
+      type: object
+    ContactSuccessResponse:
+      example:
+        success: true
+        id: id
+      properties:
+        success:
+          example: true
+          type: boolean
+        id:
+          type: string
+      type: object
+    ContactFailureResponse:
+      example:
+        success: false
+        message: message
+      properties:
+        success:
+          example: false
+          type: boolean
+        message:
+          type: string
+      type: object
+    ContactDeleteRequest:
+      example:
+        userId: userId
+        email: email
+      properties:
+        email:
+          type: string
+        userId:
+          type: string
+      type: object
+    ContactDeleteResponse:
+      example:
+        success: true
+        message: Contact deleted.
+      properties:
+        success:
+          example: true
+          type: boolean
+        message:
+          example: Contact deleted.
+          type: string
+      type: object
+    EventRequest:
+      example:
+        eventName: eventName
+        userId: userId
+        email: email
+      properties:
+        email:
+          type: string
+        userId:
+          type: string
+        eventName:
+          type: string
+      required:
+      - eventName
+      type: object
+    EventSuccessResponse:
+      example:
+        success: true
+      properties:
+        success:
+          example: true
+          type: boolean
+      type: object
+    EventFailureResponse:
+      example:
+        success: false
+        message: message
+      properties:
+        success:
+          example: false
+          type: boolean
+        message:
+          type: string
+      type: object
+    TransactionalRequest:
+      example:
+        dataVariables: "{}"
+        transactionalId: transactionalId
+        email: email
+      properties:
+        email:
+          type: string
+        transactionalId:
+          description: The ID of the transactional email to send.
+          type: string
+        dataVariables:
+          description: An object containing contact data as defined by the data variables
+            added to the transactional email template.
+          type: object
+      required:
+      - email
+      - transactionalId
+      type: object
+    TransactionalSuccessResponse:
+      example:
+        success: true
+      properties:
+        success:
+          example: true
+          type: boolean
+      type: object
+    TransactionalFailureResponse:
+      example:
+        path: path
+        success: false
+        message: message
+      properties:
+        success:
+          example: false
+          type: boolean
+        path:
+          type: string
+        message:
+          type: string
+      type: object
+    TransactionalFailure2Response:
+      example:
+        success: false
+        error:
+          path: path
+          message: message
+      properties:
+        success:
+          example: false
+          type: boolean
+        error:
+          $ref: '#/components/schemas/TransactionalFailure2Response_error'
+      type: object
+    TransactionalFailure3Response:
+      properties:
+        success:
+          example: false
+          type: boolean
+        message:
+          type: string
+      type: object
+    CustomField:
+      example:
+        key: favoriteColor
+        label: Favorite color
+        type: type
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+      type: object
+    _contacts_delete_post_500_response:
+      example:
+        success: false
+      properties:
+        success:
+          example: false
+          type: boolean
+      type: object
+    _transactional_post_400_response:
+      oneOf:
+      - $ref: '#/components/schemas/TransactionalFailureResponse'
+      - $ref: '#/components/schemas/TransactionalFailure2Response'
+      - $ref: '#/components/schemas/TransactionalFailure3Response'
+    TransactionalFailure2Response_error:
+      example:
+        path: path
+        message: message
+      properties:
+        path:
+          type: string
+        message:
+          type: string
+      type: object
+  securitySchemes:
+    apiKey:
+      scheme: bearer
+      type: http
