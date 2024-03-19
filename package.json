@@ -1,0 +1,20 @@
+{
+  "name": "loops-go",
+  "module": "generate.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "fetch-spec": "curl -s https://app.loops.so/openapi.json > spec.json",
+    "generate": "openapi-generator-cli generate -i ./spec.json -g go -o . --additional-properties=packageName=loops --git-repo-id loops-go/v1 --git-user-id stephen",
+    "postgenerate": "echo '\nnode_modules/\n' >> .gitignore && go mod tidy",
+    "test": "go test ./..."
+  },
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.13.1"
+  }
+}
